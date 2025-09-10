@@ -8,14 +8,35 @@ struct MainView: View {
     
     var body: some View {
         
-        VStack {
-            ScrollView {
-                ForEach($viewModel.drugs.indices, id: \.self) { ind in
-                    DrugItem(drug: $viewModel.drugs[ind])
+        NavigationView {
+            VStack {
+                ScrollView {
+                    ForEach($viewModel.drugs.indices, id: \.self) { ind in
+                        DrugItem(drug: $viewModel.drugs[ind])
+                    }
+                }
+            }
+            .padding()
+            
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    NavigationLink {
+                        AddDrugView(viewModel: viewModel)
+                    } label: {
+                        HStack{
+                            Text("Добавить")
+                                .foregroundStyle(.black)
+                                .font(.headline)
+                            Image(systemName: "plus.circle")
+                                .resizable()
+                                .scaledToFit()
+                                .foregroundStyle(.black)
+                                .frame(width: UIScreen.main.bounds.width * 0.07)
+                        }
+                    }
                 }
             }
         }
-        .padding()
     }
 }
 

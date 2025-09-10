@@ -8,13 +8,14 @@ struct DrugItem: View {
         HStack {
             VStack {
                 Text("\(drug.name)")
+                    .font(.title2)
+                    .foregroundStyle(.black.opacity(0.8))
                     .frame(maxWidth: .infinity, alignment: .leading)
                 
-                HStack {
-                    Text("Применено (в днях): \(drug.count) / \(drug.need)")
-                    
-                }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                Text("Применено (в днях): \(drug.count) / \(drug.need)")
+                    .font(.headline)
+                    .foregroundStyle(.black.opacity(0.8))
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
             
             Button {
@@ -36,6 +37,11 @@ struct DrugItem: View {
                     .frame(width: UIScreen.main.bounds.width * 0.07)
                     .foregroundStyle(.black)
             }
+        }
+        .padding()
+        .background {
+            RoundedRectangle(cornerRadius: 30)
+                .fill(Color.gray.opacity(0.2))
         }
     }
 }
