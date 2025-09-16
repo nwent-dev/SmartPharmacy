@@ -12,7 +12,13 @@ struct MainView: View {
             VStack {
                 ScrollView {
                     ForEach($viewModel.drugs.indices, id: \.self) { ind in
-                        DrugItem(drug: $viewModel.drugs[ind])
+                        NavigationLink {
+                            ChangeDrugView(viewModel: viewModel, drug: $viewModel.drugs[ind])
+                        } label: {
+                            DrugItem(drug: $viewModel.drugs[ind])
+                        }
+
+                        
                     }
                 }
             }
