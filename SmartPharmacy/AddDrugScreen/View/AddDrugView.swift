@@ -9,39 +9,215 @@ struct AddDrugView: View {
     
     @State private var drugName: String = ""
     @State private var need: String = ""
-    @State private var allOk: Bool = false
-
+    @State private var isAnimating: Bool = false
+    
+    private var isValid: Bool {
+        let needValue = Int(need) ?? -1
+        return !drugName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && needValue > 0
+    }
+    
     var body: some View {
-        VStack {
-            
-            Spacer()
-            
-            CustomTextField(text: $drugName, placeholder: "Название лекарства")
-            CustomTextField(text: $need, placeholder: "Сколько нужно выпить")
-                .keyboardType(.numberPad)
-            
-            Spacer()
-                .frame(height: UIScreen.main.bounds.height * 0.05)
-            
-            Button {
-                if !drugName.isEmpty || !need.isEmpty {
-                    viewModel.addDrug(drug: DrugModel(name: drugName, count: 0, need: Int(need) ?? 0))
-                    dismiss()
-                } else {
-                    print("Что-то не введнео")
+        NavigationView {
+            ScrollView {
+                VStack(spacing: 24) {
+                    
+                    // Заголовок
+                    VStack(spacing: 8) {
+                        HStack(spacing: 10) {
+                            ZStack {
+                                Circle()
+                                    .fill(
+                                        LinearGradient(
+                                            colors: [Color.blue.opacity(0.7), Color.cyan.opacity(0.5)],
+                                            startPoint: .topLeading,
+                                            endPoint: .bottomTrailing
+                                        )
+                                    )
+                                    .frame(width: 54, height: 54)
+                                Image(systemName: "pills.fill")
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 28, height: 28)
+                                    .foregroundStyle(.white)
+                                    .shadow(radius: 2)
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Новое лекарство")
+                                    .font(.title2.weight(.bold))
+                                    .foregroundStyle(.primary)
+                                Text("Добавьте препарат и количество дней приёма")
+                                    .font(.callout)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer()
+                        }
+                    }
+                    .padding(.horizontal)
+                    .padding(.top, 8)
+                    
+                    // Карточка формы
+                    VStack(spacing: 18) {
+                        LabeledField(
+                            title: "Название",
+                            systemImage: "textformat",
+                            placeholder: "Например: Акнетрент",
+                            text: $drugName,
+                            keyboard: .default
+                        )
+                        
+                        Divider().opacity(0.2)
+                        
+                        LabeledField(
+                            title: "Нужно выпить (дней)",
+                            systemImage: "calendar",
+                            placeholder: "Например: 30",
+                            text: $need,
+                            keyboard: .numberPad
+                        )
+                    }
+                    .padding(18)
+                    .background(
+                        RoundedRectangle(cornerRadius: 22, style: .continuous)
+                            .fill(
+                                LinearGradient(
+                                    colors: [
+                                        Color(.systemBackground),
+                                        Color.blue.opacity(0.03)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .shadow(color: Color.black.opacity(0.08), radius: 10, x: 0, y: 6)
+                    )
+                    .padding(.horizontal)
+                    .padding(.top, 4)
+                    
+                    // Подсказка валидации
+                    if !isValid {
+                        HStack(spacing: 8) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.yellow)
+                            Text("Введите название и положительное число дней.")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                        }
+                        .padding(.horizontal)
+                        .transition(.opacity.combined(with: .move(edge: .top)))
+                    }
+                    
+                    // Кнопка Добавить
+                    Button(action: addAction) {
+                        HStack(spacing: 10) {
+                            Image(systemName: "plus.circle.fill")
+                                .font(.title3.weight(.semibold))
+                            Text("Добавить")
+                                .font(.headline)
+                        }
+                        .padding(.vertical, 14)
+                        .frame(maxWidth: .infinity)
+                        .foregroundStyle(.white)
+                        .background(
+                            LinearGradient(
+                                colors: [Color.cyan, Color.blue],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                        .shadow(color: Color.blue.opacity(isValid ? 0.25 : 0.0), radius: 10, y: 6)
+                        .scaleEffect(isAnimating ? 0.98 : 1.0)
+                        .animation(.spring(response: 0.35, dampingFraction: 0.7), value: isAnimating)
+                    }
+                    .disabled(!isValid)
+                    .opacity(isValid ? 1.0 : 0.6)
+                    .padding(.horizontal)
+                    .padding(.bottom, 8)
+                    
+                    // Кнопка отмены
+                    Button(role: .cancel) {
+                        dismiss()
+                    } label: {
+                        Text("Отмена")
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                    }
+                    .padding(.bottom, 16)
                 }
-            } label: {
-                Text("Добавить")
-                    .font(.headline)
-                    .foregroundColor(.white)
-                    .padding()
-                    .background(Color.cyan)
-                    .cornerRadius(30)
+                .padding(.top, 12)
             }
-            
-            Spacer()
+            .scrollDismissesKeyboard(.interactively)
+            .background(Color(.systemGroupedBackground).ignoresSafeArea())
+            .navigationTitle("Добавить лекарство")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .keyboard) {
+                    HStack {
+                        Spacer()
+                        Button("Готово") {
+                            hideKeyboard()
+                        }
+                        .font(.body.weight(.semibold))
+                    }
+                }
+            }
         }
-        .padding(.horizontal)
+        .navigationViewStyle(.stack)
+    }
+    
+    private func addAction() {
+        guard isValid else { return }
+        isAnimating = true
+        let value = Int(need) ?? 0
+        viewModel.addDrug(drug: DrugModel(name: drugName.trimmingCharacters(in: .whitespacesAndNewlines),
+                                          count: 0,
+                                          need: value))
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
+            isAnimating = false
+            dismiss()
+        }
+    }
+    
+    private func hideKeyboard() {
+        #if canImport(UIKit)
+        UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+        #endif
+    }
+}
+
+// Вспомогательное поле с иконкой и заголовком
+private struct LabeledField: View {
+    let title: String
+    let systemImage: String
+    let placeholder: String
+    @Binding var text: String
+    var keyboard: UIKeyboardType = .default
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 10) {
+                Image(systemName: systemImage)
+                    .font(.headline)
+                    .foregroundStyle(.blue)
+                    .frame(width: 22)
+                Text(title)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
+                Spacer()
+            }
+            TextField(placeholder, text: $text)
+                .textInputAutocapitalization(.words)
+                .disableAutocorrection(true)
+                .keyboardType(keyboard)
+                .padding(.vertical, 10)
+                .padding(.horizontal, 12)
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(Color.gray.opacity(0.12))
+                )
+        }
     }
 }
 

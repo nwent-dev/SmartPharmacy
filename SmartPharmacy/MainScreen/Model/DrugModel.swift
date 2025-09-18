@@ -1,6 +1,6 @@
 import Foundation
 
-struct DrugModel: Identifiable, Hashable {
+struct DrugModel: Identifiable, Hashable, Codable {
     var id: UUID = UUID()
     var name: String
     var count: Int
