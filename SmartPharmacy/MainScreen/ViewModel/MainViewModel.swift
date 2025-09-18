@@ -10,10 +10,10 @@ class MainViewModel: ObservableObject {
     init() {
         load()
         
-        // Автосохранение при любом изменении массива
+        // Автосохранение при любом изменении массива (подстраховка)
         $drugs
             .dropFirst() // пропустить начальное значение из load()
-            .sink { [weak self] _ in
+            .sink { [weak self] newValue in
                 self?.save()
             }
             .store(in: &cancellables)
@@ -21,10 +21,24 @@ class MainViewModel: ObservableObject {
     
     func addDrug(drug: DrugModel) {
         drugs.append(drug)
+        save() // явное сохранение
     }
     
     func changeDrug(drug: DrugModel) {
         drugs = drugs.map { $0.id == drug.id ? drug : $0 }
+        save() // явное сохранение
+    }
+    
+    func remove(at offsets: IndexSet) {
+        drugs.remove(atOffsets: offsets)
+        save() // явное сохранение
+    }
+    
+    func remove(id: UUID) {
+        if let idx = drugs.firstIndex(where: { $0.id == id }) {
+            drugs.remove(at: idx)
+            save()
+        }
     }
     
     // MARK: - Persistence
@@ -33,6 +47,10 @@ class MainViewModel: ObservableObject {
         do {
             let data = try JSONEncoder().encode(drugs)
             UserDefaults.standard.set(data, forKey: storageKey)
+            // Лог успешного сохранения
+            #if DEBUG
+            print("Saved \(drugs.count) drugs to UserDefaults")
+            #endif
         } catch {
             print("Save error: \(error)")
         }
@@ -40,7 +58,6 @@ class MainViewModel: ObservableObject {
     
     private func load() {
         guard let data = UserDefaults.standard.data(forKey: storageKey) else {
-            // Первичный пример, если хранилище пусто — можно оставить пустым
             self.drugs = []
             return
         }
@@ -48,7 +65,6 @@ class MainViewModel: ObservableObject {
             let decoded = try JSONDecoder().decode([DrugModel].self, from: data)
             self.drugs = decoded
         } catch {
-            print("Load error: \(error)")
             self.drugs = []
         }
     }
